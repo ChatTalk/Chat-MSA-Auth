@@ -15,6 +15,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 @Slf4j(topic = "JWT UTIL")
@@ -22,6 +23,9 @@ public class JwtUtil {
     private final String ROLE_KEY = "role";
     private final String BEARER_PREFIX = "Bearer ";
     private final SecretKey secretKey;
+
+    private final long ACCESS_TOKEN_EAT = 120 * 30 * 1000L; // 1H
+    private final long REFRESH_TOKEN_EAT = 7 * 24 * 60 * 60 * 1000L; // 7D
 
     public JwtUtil(@Value("${jwt.secret.key}") String secret) {
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
@@ -60,13 +64,23 @@ public class JwtUtil {
         return new UserInfoDTO(username, role);
     }
 
+    // 만료만 된 토큰으로부터 UserInfo(username(email), user role)을 반환하는 메소드
+    public UserInfoDTO getUserInfoFromExpiredToken(ExpiredJwtException exception) {
+        Claims claims = exception.getClaims();
+
+        String username = claims.getSubject();
+        UserRoleEnum role = claims.get(ROLE_KEY, UserRoleEnum.class);
+
+        return new UserInfoDTO(username, role);
+    }
+
     // 토큰이 있을 경우, 토큰 값을 추출하기
     private String extractToken(String tokenValue) {
         if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
             return tokenValue.substring(7);
         }
 
-        throw new JwtException("엑세스 토큰이 확인되지 않습니다.");
+        throw new IllegalArgumentException("엑세스 토큰이 확인되지 않습니다.");
     }
 
     // 토큰의 만료일자 파싱(정상적인 토큰)
@@ -86,5 +100,21 @@ public class JwtUtil {
     // 만료만 된 엑세스 토큰 재발급용
     public String getUsernameFromExpiredJwt(ExpiredJwtException exception) {
         return exception.getClaims().getSubject();
+    }
+
+    // 새로운 엑세스 토큰 생성
+    public String createNewAccessToken(UserInfoDTO userInfoDTO) {
+        String email = userInfoDTO.getEmail();
+        UserRoleEnum role = userInfoDTO.getRole();
+        Date date = new Date();
+
+        return createToken(createTokenPayload(email, date, ACCESS_TOKEN_EAT, role));
+    }
+
+    // 토큰 페이로드 생성
+    private TokenPayload createTokenPayload(String email, Date date, long seconds, UserRoleEnum role){
+        return new TokenPayload(
+                email, UUID.randomUUID().toString(), date, new Date(date.getTime()+seconds), role
+        );
     }
 }
