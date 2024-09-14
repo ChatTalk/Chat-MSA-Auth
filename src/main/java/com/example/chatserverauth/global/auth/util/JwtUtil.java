@@ -1,5 +1,7 @@
 package com.example.chatserverauth.global.auth.util;
 
+import com.example.chatserverauth.domain.dto.UserInfoDTO;
+import com.example.chatserverauth.domain.entity.UserRoleEnum;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -17,7 +19,7 @@ import java.util.Date;
 @Component
 @Slf4j(topic = "JWT UTIL")
 public class JwtUtil {
-    private final String AUTHORIZATION_KEY = "auth";
+    private final String ROLE_KEY = "role";
     private final String BEARER_PREFIX = "Bearer ";
     private final SecretKey secretKey;
 
@@ -29,7 +31,7 @@ public class JwtUtil {
         return BEARER_PREFIX +
                 Jwts.builder()
                         .subject(payload.getSub()) // 사용자 식별자값(ID)
-                        .claim(AUTHORIZATION_KEY, payload.getRole()) // 사용자 권한
+                        .claim(ROLE_KEY, payload.getRole()) // 사용자 권한
                         .expiration(payload.getExpiresAt()) // 만료 시간
                         .issuedAt(payload.getIat()) // 발급일
                         .id(payload.getJti()) // JWT ID
@@ -47,8 +49,19 @@ public class JwtUtil {
         return this.getClaims(token).getSubject();
     }
 
+    // 토큰으로부터 UserInfo(username(email), user role)을 반환하는 메소드
+    public UserInfoDTO getUserInfoFromToken(String token) {
+        String tokenValue = extractToken(token);
+        Claims claims = getClaims(tokenValue);
+
+        String username = claims.getSubject();
+        UserRoleEnum role = claims.get(ROLE_KEY, UserRoleEnum.class);
+
+        return new UserInfoDTO(username, role);
+    }
+
     // 토큰이 있을 경우, 토큰 값을 추출하기
-    public String extractToken(String tokenValue) {
+    private String extractToken(String tokenValue) {
         if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
             return tokenValue.substring(7);
         }
