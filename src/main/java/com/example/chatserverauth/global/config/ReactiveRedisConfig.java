@@ -22,8 +22,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 
 @Configuration
-@EnableAutoConfiguration(exclude={RedisAutoConfiguration.class}) // 자동 생성 설정과 커스텀 설정 충돌 방지
-// RedisReactiveAutoConfiguration.class 얘도 포함시켜야 되려나 나중에?
+@EnableAutoConfiguration(exclude={RedisAutoConfiguration.class, RedisReactiveAutoConfiguration.class}) // 자동 생성 설정과 커스텀 설정 충돌 방지
 public class ReactiveRedisConfig {
 
     @Value("${spring.data.redis.host}")
