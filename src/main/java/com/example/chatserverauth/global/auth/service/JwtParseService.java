@@ -7,7 +7,6 @@ import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -22,7 +21,6 @@ public class JwtParseService {
 
     private final JwtUtil jwtUtil;
     private final ReactiveRedisTemplate<String, UserInfoDTO> userInfoTemplate;
-    private final KafkaTemplate<String, UserInfoDTO> kafkaTemplate;
 
     // 토큰을 파싱하거나 캐시에서 조회하는 로직
     public Mono<UserInfoDTO> parseTokenWithCache(String token) {
@@ -55,11 +53,5 @@ public class JwtParseService {
                 return Mono.error(new JwtException(ex.getMessage()));
             }
         });
-    }
-
-    // kafka 메시지 전송
-    public Mono<Void> sendResponseToKafka(String topic, UserInfoDTO userInfoDTO) {
-        return Mono.fromCallable(() -> kafkaTemplate.send(topic, userInfoDTO))
-                .then();
     }
 }
