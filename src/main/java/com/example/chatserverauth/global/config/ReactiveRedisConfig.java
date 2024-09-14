@@ -34,7 +34,7 @@ public class ReactiveRedisConfig {
     private String password;
 
     @Bean
-    // Lettuce는 ReactiveRedisConnectionFactory의 구현체중 일부
+    // Lettuce는 ReactiveRedisConnectionFactory의 구현체 중 일부
     public ReactiveRedisConnectionFactory connectionFactory() {
         RedisStandaloneConfiguration redisConfiguration = new RedisStandaloneConfiguration();
         redisConfiguration.setHostName(host);
