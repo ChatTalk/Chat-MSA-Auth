@@ -1,10 +1,8 @@
 package com.example.chatserverauth.global.auth.util;
 
 import com.example.chatserverauth.domain.dto.UserInfoDTO;
-import com.example.chatserverauth.domain.entity.UserRoleEnum;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,8 +52,7 @@ public class JwtUtil {
     }
 
     // 토큰으로부터 UserInfo(username(email), user role)을 반환하는 메소드
-    public UserInfoDTO getUserInfoFromToken(String token) {
-        String tokenValue = extractToken(token);
+    public UserInfoDTO getUserInfoFromToken(String tokenValue) {
         Claims claims = getClaims(tokenValue);
 
         String username = claims.getSubject();
@@ -75,7 +72,7 @@ public class JwtUtil {
     }
 
     // 토큰이 있을 경우, 토큰 값을 추출하기
-    private String extractToken(String tokenValue) {
+    public String extractToken(String tokenValue) {
         if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
             return tokenValue.substring(7);
         }

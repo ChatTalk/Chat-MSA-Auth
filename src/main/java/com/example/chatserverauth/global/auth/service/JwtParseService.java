@@ -27,12 +27,13 @@ public class JwtParseService {
     // 토큰을 파싱하거나 캐시에서 조회하는 로직
     public Mono<UserInfoDTO> parseTokenWithCache(String tokenValue) {
         String token = URLDecoder.decode(tokenValue, StandardCharsets.UTF_8);
+        String extractedToken = jwtUtil.extractToken(token);
 
         // 먼저 Redis 캐시에서 조회
         return userInfoTemplate
                 .opsForValue()
-                .get(REDIS_ACCESS_KEY + token)
-                .switchIfEmpty(parseAndCacheToken(token)); // 캐시 미스 시 JWT 파싱 후 캐시에 저장
+                .get(REDIS_ACCESS_KEY + extractedToken)
+                .switchIfEmpty(parseAndCacheToken(extractedToken)); // 캐시 미스 시 JWT 파싱 후 캐시에 저장
     }
 
     // 날 것의 토큰이 입력됐다
