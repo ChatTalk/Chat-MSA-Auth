@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-public class KafkaProducerConfig {
+public class ReactiveKafkaProducerConfig {
 
     @Value("${kafka.uri}")
     private String uri;
