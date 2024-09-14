@@ -34,7 +34,7 @@ public class JwtParseService {
     }
 
     // 날 것의 토큰이 입력됐다
-    public Mono<UserInfoDTO> parseAndCacheToken(String token) {
+    private Mono<UserInfoDTO> parseAndCacheToken(String token) {
         return Mono.defer(() -> {
             try {
                 // JWT 토큰 파싱
