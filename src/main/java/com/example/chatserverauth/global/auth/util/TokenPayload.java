@@ -13,10 +13,10 @@ public class TokenPayload {
     private Date iat;
     private Date expiresAt;
 
-    public TokenPayload(String sub, String jti, Date iat, Date expiresAt, UserRoleEnum role) {
+    public TokenPayload(String sub, String jti, Date iat, Date expiresAt, String role) {
         this.sub = sub;
         this.jti = jti;
-        this.role = role.getRole();
+        this.role = role;
         this.iat = iat;
         this.expiresAt = expiresAt;
     }

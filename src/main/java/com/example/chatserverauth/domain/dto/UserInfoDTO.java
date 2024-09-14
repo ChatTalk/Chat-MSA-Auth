@@ -10,5 +10,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserInfoDTO {
     private String email;
-    private UserRoleEnum role;
+    private String role;
 }

@@ -20,7 +20,7 @@ import java.util.UUID;
 @Component
 @Slf4j(topic = "JWT UTIL")
 public class JwtUtil {
-    private final String ROLE_KEY = "role";
+    private final String ROLE_KEY = "auth";
     private final String BEARER_PREFIX = "Bearer ";
     private final SecretKey secretKey;
 
@@ -59,7 +59,7 @@ public class JwtUtil {
         Claims claims = getClaims(tokenValue);
 
         String username = claims.getSubject();
-        UserRoleEnum role = claims.get(ROLE_KEY, UserRoleEnum.class);
+        String role = claims.get(ROLE_KEY, String.class);
 
         return new UserInfoDTO(username, role);
     }
@@ -69,7 +69,7 @@ public class JwtUtil {
         Claims claims = exception.getClaims();
 
         String username = claims.getSubject();
-        UserRoleEnum role = claims.get(ROLE_KEY, UserRoleEnum.class);
+        String role = claims.get(ROLE_KEY, String.class);
 
         return new UserInfoDTO(username, role);
     }
@@ -105,14 +105,14 @@ public class JwtUtil {
     // 새로운 엑세스 토큰 생성
     public String createNewAccessToken(UserInfoDTO userInfoDTO) {
         String email = userInfoDTO.getEmail();
-        UserRoleEnum role = userInfoDTO.getRole();
+        String role = userInfoDTO.getRole();
         Date date = new Date();
 
         return createToken(createTokenPayload(email, date, ACCESS_TOKEN_EAT, role));
     }
 
     // 토큰 페이로드 생성
-    private TokenPayload createTokenPayload(String email, Date date, long seconds, UserRoleEnum role){
+    private TokenPayload createTokenPayload(String email, Date date, long seconds, String role){
         return new TokenPayload(
                 email, UUID.randomUUID().toString(), date, new Date(date.getTime()+seconds), role
         );
