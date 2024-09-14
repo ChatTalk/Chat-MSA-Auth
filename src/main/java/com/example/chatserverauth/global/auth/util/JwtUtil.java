@@ -25,11 +25,6 @@ public class JwtUtil {
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
     }
 
-    /**
-     * 시간을 동일하게 맞춘 토큰 생성
-     * @param payload tokenPayload
-     * @return jwtToken
-     */
     public String createToken(TokenPayload payload) {
         return BEARER_PREFIX +
                 Jwts.builder()
@@ -42,35 +37,17 @@ public class JwtUtil {
                         .compact();
     }
 
-    /**
-     * 토큰의 만료 기간 여부 확인
-     * @param token 대상 토큰 값
-     * @return 만료 여부
-     */
     // 토큰이 만료되었는지 확인하는 메서드
     public boolean isTokenExpired(String token) {
         return this.getClaims(token).getExpiration().before(new Date());
     }
 
-    /**
-     * 토큰의 유저 정보 반환
-     * @param token 대상 토큰 값
-     * @return 유저 정보
-     */
+    // 토큰으로부터 username(여기서는 이메일) 추출하면서 동시에 토큰 파싱 검증
     public String getUsernameFromToken(String token) {
-        // 만료된 토큰에서 클레임을 파싱하되 서명 검증은 생략
         return this.getClaims(token).getSubject();
     }
 
-    /**
-     * 헤더값으로 부터 토큰 값 가져오기
-     * @param fromHeader 대상 문자열
-     * @return 확인된 토큰값
-     */
-    public String getAccessToken(String fromHeader) {
-        return this.extractToken(fromHeader);
-    }
-
+    // 토큰이 있을 경우, 토큰 값을 추출하기
     public String extractToken(String tokenValue) {
         if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
             return tokenValue.substring(7);
@@ -79,24 +56,12 @@ public class JwtUtil {
         throw new JwtException("엑세스 토큰이 확인되지 않습니다.");
     }
 
-    /**
-     * 토큰 만료일자 파싱
-     * @param token 대상 토큰값
-     * @return 토큰 만료일자
-     */
+    // 토큰의 만료일자 파싱(정상적인 토큰)
     public Date getTokenIat(String token) {
         return this.getClaims(token).getIssuedAt();
     }
 
-    /**
-     * 토큰 유효여부 검증
-     * @param token 대상 토큰값
-     * @return 유효성 여부
-     */
-    public boolean validateToken(String token) {
-        return !getClaims(token).isEmpty();
-    }
-
+    // 클레임 꺼내기(토큰 검증)
     private Claims getClaims(String token){
         return Jwts.parser()
                 .verifyWith(secretKey)
@@ -105,7 +70,7 @@ public class JwtUtil {
                 .getPayload();
     }
 
-    // 엑세스 토큰 재발급용
+    // 만료만 된 엑세스 토큰 재발급용
     public String getUsernameFromExpiredJwt(ExpiredJwtException exception) {
         return exception.getClaims().getSubject();
     }
