@@ -1,5 +1,6 @@
 package com.example.chatserverauth.global.auth.service;
 
+import com.example.chatserverauth.domain.dto.TokenDTO;
 import com.example.chatserverauth.domain.dto.UserInfoDTO;
 import com.example.chatserverauth.global.auth.util.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.UUID;
 
 import static com.example.chatserverauth.global.constant.Constants.REDIS_ACCESS_KEY;
 
@@ -25,7 +27,8 @@ public class JwtParseService {
     private final ReactiveRedisTemplate<String, UserInfoDTO> userInfoTemplate;
 
     // 토큰을 파싱하거나 캐시에서 조회하는 로직
-    public Mono<UserInfoDTO> parseTokenWithCache(String tokenValue) {
+    public Mono<UserInfoDTO> parseTokenWithCache(TokenDTO tokenDTO) {
+        String tokenValue = tokenDTO.getToken();
         String token = URLDecoder.decode(tokenValue, StandardCharsets.UTF_8);
         String extractedToken = jwtUtil.extractToken(token);
 
@@ -33,19 +36,19 @@ public class JwtParseService {
         return userInfoTemplate
                 .opsForValue()
                 .get(REDIS_ACCESS_KEY + extractedToken)
-                .switchIfEmpty(parseAndCacheToken(extractedToken)); // 캐시 미스 시 JWT 파싱 후 캐시에 저장
+                .switchIfEmpty(parseAndCacheToken(extractedToken, tokenDTO.getId())); // 캐시 미스 시 JWT 파싱 후 캐시에 저장
     }
 
     // 날 것의 토큰이 입력됐다
-    private Mono<UserInfoDTO> parseAndCacheToken(String token) {
+    private Mono<UserInfoDTO> parseAndCacheToken(String token, UUID id) {
         return Mono.defer(() -> {
             try {
                 // JWT 토큰 파싱
-                UserInfoDTO userInfo = jwtUtil.getUserInfoFromToken(token);
+                UserInfoDTO userInfo = jwtUtil.getUserInfoFromToken(token, id);
                 return Mono.just(userInfo);
             } catch (ExpiredJwtException ex) {
                 // 만료된 토큰 처리
-                UserInfoDTO userInfoDTO = jwtUtil.getUserInfoFromExpiredToken(ex);
+                UserInfoDTO userInfoDTO = jwtUtil.getUserInfoFromExpiredToken(ex, id);
                 log.info("만료 이메일: {}", userInfoDTO.getEmail());
                 log.info("만료 역할: {}", userInfoDTO.getRole());
                 String newAccessToken = jwtUtil.createNewAccessToken(userInfoDTO);

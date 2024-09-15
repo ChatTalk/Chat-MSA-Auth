@@ -1,5 +1,6 @@
 package com.example.chatserverauth.global.config;
 
+import com.example.chatserverauth.domain.dto.TokenDTO;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,39 +36,23 @@ public class ReactiveKafkaConsumerConfig {
     private String topic;
 
     @Bean
-    public KafkaReceiver<String, String> kafkaReceiver() {
+    public KafkaReceiver<String, TokenDTO> kafkaReceiver() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, uri);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, TokenDTO.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
 
-        ReceiverOptions<String, String> receiverOptions = ReceiverOptions.<String, String>create(props)
+        ReceiverOptions<String, TokenDTO> receiverOptions = ReceiverOptions.<String, TokenDTO>create(props)
                 .subscription(Collections.singletonList(topic))
-                .commitInterval(Duration.ZERO)      // 수동 커밋 사용
-                .commitBatchSize(0);                // 수동 커밋 크기 설정
+                .withValueDeserializer(new JsonDeserializer<>(TokenDTO.class, false))
+                .commitInterval(Duration.ZERO) // 수동 커밋 사용
+                .commitBatchSize(0); // 수동 커밋 크기 설정
 
         return KafkaReceiver.create(receiverOptions);
     }
-
-//    @Bean
-//    public ReceiverOptions<String, String> kafkaReceiver() {
-//        Map<String, Object> props = new HashMap<>();
-//        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, uri);
-//        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-//        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
-//        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-//        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-//        props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
-//
-//        ReceiverOptions<String, String> basicReceiverOptions = ReceiverOptions.create(props);
-//        return basicReceiverOptions.subscription(Collections.singletonList(topic));
-//    }
-//
-//    @Bean
-//    public ReactiveKafkaConsumerTemplate<String, String> reactiveKafkaConsumer(ReceiverOptions<String, String> kafkaReceiverOptions) {
-//        return new ReactiveKafkaConsumerTemplate<>(kafkaReceiverOptions);
-//    }
 }

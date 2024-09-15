@@ -52,23 +52,23 @@ public class JwtUtil {
     }
 
     // 토큰으로부터 UserInfo(username(email), user role)을 반환하는 메소드
-    public UserInfoDTO getUserInfoFromToken(String tokenValue) {
+    public UserInfoDTO getUserInfoFromToken(String tokenValue, UUID id) {
         Claims claims = getClaims(tokenValue);
 
         String username = claims.getSubject();
         String role = claims.get(ROLE_KEY, String.class);
 
-        return new UserInfoDTO(username, role);
+        return new UserInfoDTO(id, username, role);
     }
 
     // 만료만 된 토큰으로부터 UserInfo(username(email), user role)을 반환하는 메소드
-    public UserInfoDTO getUserInfoFromExpiredToken(ExpiredJwtException exception) {
+    public UserInfoDTO getUserInfoFromExpiredToken(ExpiredJwtException exception, UUID id) {
         Claims claims = exception.getClaims();
 
         String username = claims.getSubject();
         String role = claims.get(ROLE_KEY, String.class);
 
-        return new UserInfoDTO(username, role);
+        return new UserInfoDTO(id, username, role);
     }
 
     // 토큰이 있을 경우, 토큰 값을 추출하기

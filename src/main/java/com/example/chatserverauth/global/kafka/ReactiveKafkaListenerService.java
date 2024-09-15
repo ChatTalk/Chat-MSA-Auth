@@ -1,12 +1,11 @@
 package com.example.chatserverauth.global.kafka;
 
+import com.example.chatserverauth.domain.dto.TokenDTO;
 import com.example.chatserverauth.domain.dto.UserInfoDTO;
 import com.example.chatserverauth.global.auth.service.JwtParseService;
-import io.jsonwebtoken.JwtException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
 import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -20,8 +19,7 @@ public class ReactiveKafkaListenerService {
 
     private final JwtParseService jwtParseService;
     private final ReactiveKafkaProducerTemplate<String, UserInfoDTO> kafkaProducerTemplate;
-//    private final ReactiveKafkaConsumerTemplate<String, String> kafkaConsumerTemplate;
-    private final KafkaReceiver<String, String> kafkaReceiver;
+    private final KafkaReceiver<String, TokenDTO> kafkaReceiver;
 
     @PostConstruct
     public void startListening() {
@@ -38,7 +36,7 @@ public class ReactiveKafkaListenerService {
                             .flatMap(userInfoDTO -> {
                                 // 파싱된 UserInfoDTO 카프카로 송신
                                 return kafkaProducerTemplate
-                                        .send("auth", userInfoDTO)
+                                        .send("auth", record.value().getId().toString(), userInfoDTO)
                                         .then(Mono.just(record)); // 처리 완료 후, 현재 레코드 반환
                             })
                             .doOnSuccess(userInfoDTO -> log.info("JWT 파싱 완료: {}", userInfoDTO))
@@ -53,31 +51,5 @@ public class ReactiveKafkaListenerService {
                 })
                 .doOnError(error -> log.error("카프카 수신 중 에러 발생: {}", error.getMessage()))
                 .subscribe();
-
-//        kafkaConsumerTemplate
-//                .receive()
-//                .flatMap(record ->
-//                        jwtParseService
-//                                .parseTokenWithCache(record.value())
-//                                .flatMap(userInfoDTO -> {
-//                                    // 파싱된 UserInfoDTO 카프카로 송신
-//                                    return kafkaProducerTemplate
-//                                            .send("auth", userInfoDTO)
-//                                            .then(Mono.just(record)); // 처리 완료 후, 현재 레코드 반환
-//                                })
-//                                .doOnError(
-//                                        error -> {
-//                                            log.error("토큰 처리 중 에러 발생: {}", error.getMessage());
-//                                            throw new JwtException(error.getMessage());
-//                                        }
-//                                )
-//                )
-//                .doOnNext(record -> log.info("처리 완료된 메세지: {}", record.value()))
-//                .doOnError(error -> {
-//                            log.error("처리 실패 메세지: {}", error.getMessage());
-//                            throw new RuntimeException(error.getMessage());
-//                        }
-//                )
-//                .subscribe();
     }
 }
