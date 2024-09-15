@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
@@ -53,12 +54,17 @@ public class JwtUtil {
 
     // 토큰으로부터 UserInfo(username(email), user role)을 반환하는 메소드
     public UserInfoDTO getUserInfoFromToken(String tokenValue, UUID id) {
-        Claims claims = getClaims(tokenValue);
+        String token = extractToken(tokenValue);
+        Claims claims = getClaims(token);
 
         String username = claims.getSubject();
         String role = claims.get(ROLE_KEY, String.class);
 
-        return new UserInfoDTO(id, username, role);
+        tokenValue = URLEncoder.encode(tokenValue, StandardCharsets.UTF_8);
+        tokenValue = tokenValue.replace("+", "%20");
+        log.info("여전히 유효한 토큰: {}", tokenValue);
+
+        return new UserInfoDTO(id, username, role, tokenValue);
     }
 
     // 만료만 된 토큰으로부터 UserInfo(username(email), user role)을 반환하는 메소드
@@ -68,7 +74,7 @@ public class JwtUtil {
         String username = claims.getSubject();
         String role = claims.get(ROLE_KEY, String.class);
 
-        return new UserInfoDTO(id, username, role);
+        return new UserInfoDTO(id, username, role, "temp");
     }
 
     // 토큰이 있을 경우, 토큰 값을 추출하기

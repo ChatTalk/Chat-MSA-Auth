@@ -28,7 +28,7 @@ public class ReactiveKafkaListenerService {
         kafkaReceiver
                 .receive()
                 .flatMap(record -> {
-                    log.info("받은 메시지: {}", record.value());
+                    log.info("받은 메시지 토큰: {}", record.value().getToken());
 
                     // JWT 파싱 로직 호출
                     return jwtParseService
@@ -36,6 +36,7 @@ public class ReactiveKafkaListenerService {
                             .flatMap(userInfoDTO -> {
                                 // 파싱된 UserInfoDTO 카프카로 송신
                                 return kafkaProducerTemplate
+                                        // 동일한 파티션을 왕복
                                         .send("auth", record.value().getId().toString(), userInfoDTO)
                                         .then(Mono.just(record)); // 처리 완료 후, 현재 레코드 반환
                             })

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.UUID;
@@ -30,28 +31,37 @@ public class JwtParseService {
     public Mono<UserInfoDTO> parseTokenWithCache(TokenDTO tokenDTO) {
         String tokenValue = tokenDTO.getToken();
         String token = URLDecoder.decode(tokenValue, StandardCharsets.UTF_8);
-        String extractedToken = jwtUtil.extractToken(token);
+
+        log.info("딱 받은 시점의 토큰값: {}", tokenValue);
 
         // 먼저 Redis 캐시에서 조회
         return userInfoTemplate
                 .opsForValue()
-                .get(REDIS_ACCESS_KEY + extractedToken)
-                .switchIfEmpty(parseAndCacheToken(extractedToken, tokenDTO.getId())); // 캐시 미스 시 JWT 파싱 후 캐시에 저장
+                .get(REDIS_ACCESS_KEY + tokenValue)
+                .switchIfEmpty(parseAndCacheToken(tokenValue, token, tokenDTO.getId())); // 캐시 미스 시 JWT 파싱 후 캐시에 저장
     }
 
     // 날 것의 토큰이 입력됐다
-    private Mono<UserInfoDTO> parseAndCacheToken(String token, UUID id) {
+    private Mono<UserInfoDTO> parseAndCacheToken(String tokenValue, String token, UUID id) {
         return Mono.defer(() -> {
             try {
                 // JWT 토큰 파싱
                 UserInfoDTO userInfo = jwtUtil.getUserInfoFromToken(token, id);
-                return Mono.just(userInfo);
+                log.info("유효한 기존의 토큰(공백이 맞아): {}", token);
+
+                return userInfoTemplate
+                        .opsForValue()
+                        .set(REDIS_ACCESS_KEY + tokenValue, userInfo, Duration.ofMillis(120 * 30 * 1000L))
+                        .thenReturn(userInfo);
             } catch (ExpiredJwtException ex) {
                 // 만료된 토큰 처리
                 UserInfoDTO userInfoDTO = jwtUtil.getUserInfoFromExpiredToken(ex, id);
                 log.info("만료 이메일: {}", userInfoDTO.getEmail());
                 log.info("만료 역할: {}", userInfoDTO.getRole());
-                String newAccessToken = jwtUtil.createNewAccessToken(userInfoDTO);
+                String newAccessToken = URLEncoder.encode(jwtUtil.createNewAccessToken(userInfoDTO), StandardCharsets.UTF_8);
+                newAccessToken = newAccessToken.replace("+", "%20");
+                log.info("새롭게 생성한 토큰: {}", newAccessToken);
+                userInfoDTO.setToken(newAccessToken);
 
                 // Redis에 새 토큰 저장
                 return userInfoTemplate
