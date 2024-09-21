@@ -28,9 +28,6 @@ public class KafkaConsumerConfig {
     @Value("${kafka.auto-offset-reset}")
     private String autoOffsetReset;
 
-    @Value("${kafka.topic}")
-    private String topic;
-
     @Bean
     public ConsumerFactory<String, TokenDTO> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
