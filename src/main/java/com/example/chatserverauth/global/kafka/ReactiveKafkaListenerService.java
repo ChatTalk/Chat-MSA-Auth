@@ -44,12 +44,6 @@ public class ReactiveKafkaListenerService {
                             .doOnError(error -> log.error("토큰 처리 중 에러 발생: {}", error.getMessage()))
                             .then(Mono.just(record));
                 })
-                .publishOn(Schedulers.boundedElastic())
-                .doOnNext(record -> {
-                    // 메시지 처리 완료 후 오프셋 커밋
-                    record.receiverOffset().commit().block();
-                    log.info("메시지 처리 완료 및 커밋: {}", record.value());
-                })
                 .doOnError(error -> log.error("카프카 수신 중 에러 발생: {}", error.getMessage()))
                 .subscribe();
     }
