@@ -53,7 +53,7 @@ public class JwtUtil {
     }
 
     // 토큰으로부터 UserInfo(username(email), user role)을 반환하는 메소드
-    public UserInfoDTO getUserInfoFromToken(String tokenValue, UUID id) {
+    public UserInfoDTO getUserInfoFromToken(String tokenValue, String id) {
         String token = extractToken(tokenValue);
         Claims claims = getClaims(token);
 
@@ -68,7 +68,7 @@ public class JwtUtil {
     }
 
     // 만료만 된 토큰으로부터 UserInfo(username(email), user role)을 반환하는 메소드
-    public UserInfoDTO getUserInfoFromExpiredToken(ExpiredJwtException exception, UUID id) {
+    public UserInfoDTO getUserInfoFromExpiredToken(ExpiredJwtException exception, String id) {
         Claims claims = exception.getClaims();
 
         String username = claims.getSubject();

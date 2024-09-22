@@ -47,7 +47,7 @@ public class JwtParseService {
     }
 
     // 날 것의 토큰이 입력됐다
-    private UserInfoDTO parseAndCacheToken(String tokenValue, String token, UUID id) {
+    private UserInfoDTO parseAndCacheToken(String tokenValue, String token, String id) {
         try {
             // JWT 토큰 파싱
             UserInfoDTO userInfo = jwtUtil.getUserInfoFromToken(token, id);

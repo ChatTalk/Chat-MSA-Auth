@@ -33,9 +33,9 @@ public class KafkaListenerService {
         if (tokenDTO.getToken() == null) throw new JwtException("엑세스 토큰이 존재하지 않습니다.");
 
         UserInfoDTO userInfoDTO = jwtParseService.parseTokenWithCache(tokenDTO);
-        log.info("송신 파티션 키: {}\n송신 파싱 이메일: {}", tokenDTO.getId().toString(), userInfoDTO.getEmail());
+        log.info("송신 파티션 키: {}\n송신 파싱 이메일: {}", tokenDTO.getId(), userInfoDTO.getEmail());
 
-        userInfoTemplate.opsForValue().set(tokenDTO.getId().toString(), userInfoDTO);
+        userInfoTemplate.opsForValue().set(tokenDTO.getId(), userInfoDTO);
 
         log.info("로직 수행 시간: {}", System.nanoTime());
     }
