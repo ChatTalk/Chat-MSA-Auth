@@ -34,6 +34,9 @@ public class KafkaListenerService {
 
         UserInfoDTO userInfoDTO = jwtParseService.parseTokenWithCache(tokenDTO);
         log.info("송신 파티션 키: {}\n송신 파싱 이메일: {}", tokenDTO.getId().toString(), userInfoDTO.getEmail());
-        kafkaTemplate.send("auth", tokenDTO.getId().toString(), userInfoDTO);
+
+        userInfoTemplate.opsForValue().set(tokenDTO.getId().toString(), userInfoDTO);
+
+        log.info("로직 수행 시간: {}", System.nanoTime());
     }
 }
