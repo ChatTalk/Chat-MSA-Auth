@@ -12,6 +12,10 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+
+import static com.example.chatserverauth.global.constant.Constants.REDIS_ACCESS_KEY;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -35,7 +39,7 @@ public class KafkaListenerService {
         UserInfoDTO userInfoDTO = jwtParseService.parseTokenWithCache(tokenDTO);
         log.info("송신 파티션 키: {}\n송신 파싱 이메일: {}", tokenDTO.getId(), userInfoDTO.getEmail());
 
-        userInfoTemplate.opsForValue().set(tokenDTO.getId(), userInfoDTO);
+        userInfoTemplate.opsForValue().set(REDIS_ACCESS_KEY + tokenDTO.getId(), userInfoDTO, Duration.ofHours(1));
 
         log.info("로직 수행 시간: {}", System.nanoTime());
     }

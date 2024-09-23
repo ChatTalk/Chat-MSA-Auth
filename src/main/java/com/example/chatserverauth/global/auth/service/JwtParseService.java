@@ -36,24 +36,15 @@ public class JwtParseService {
 
         log.info("딱 받은 시점의 토큰값: {}", tokenValue);
 
-        // 먼저 Redis 캐시에서 조회
-        UserInfoDTO cachedUserInfo = userInfoTemplate.opsForValue().get(REDIS_ACCESS_KEY + tokenValue);
-        if (cachedUserInfo != null) {
-            return cachedUserInfo;
-        }
-
         // 캐시 미스 시 JWT 파싱 후 캐시에 저장
-        return parseAndCacheToken(tokenValue, token, tokenDTO.getId());
+        return parseAndCacheToken(token, tokenDTO.getId());
     }
 
     // 날 것의 토큰이 입력됐다
-    private UserInfoDTO parseAndCacheToken(String tokenValue, String token, String id) {
+    private UserInfoDTO parseAndCacheToken(String token, String id) {
         try {
             // JWT 토큰 파싱
-            UserInfoDTO userInfo = jwtUtil.getUserInfoFromToken(token, id);
-//            log.info("유효한 기존의 토큰(공백이 맞아): {}", token);
-            userInfoTemplate.opsForValue().set(REDIS_ACCESS_KEY + tokenValue, userInfo, 120 * 30, TimeUnit.SECONDS);
-            return userInfo;
+            return jwtUtil.getUserInfoFromToken(token, id);
         } catch (ExpiredJwtException ex) {
             // 만료된 토큰 처리
             UserInfoDTO userInfoDTO = jwtUtil.getUserInfoFromExpiredToken(ex, id);
@@ -64,8 +55,8 @@ public class JwtParseService {
             log.info("새롭게 생성한 토큰: {}", newAccessToken);
             userInfoDTO.setToken(newAccessToken);
 
-            // Redis에 새 토큰 저장
-            userInfoTemplate.opsForValue().set(REDIS_ACCESS_KEY + newAccessToken, userInfoDTO, 120 * 30, TimeUnit.SECONDS);
+            // Redis에 새 토큰 저장(무효화 예정 id + 새로운 데이터)
+            userInfoTemplate.opsForValue().set(REDIS_ACCESS_KEY + id, userInfoDTO, 120 * 30, TimeUnit.SECONDS);
             return userInfoDTO;
         } catch (JwtException ex) {
             log.error("만료 외에 다른 토큰 예외 발생: {}", ex.getMessage());
